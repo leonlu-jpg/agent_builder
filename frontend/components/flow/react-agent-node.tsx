@@ -3,9 +3,13 @@ import { Handle, Position } from '@xyflow/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Bot } from 'lucide-react';
 
-const ReActAgentNode = () => {
+const ReActAgentNode = ({ data }: { data: { isActive?: boolean } }) => {
   return (
-    <Card className="w-[200px] border-2 border-primary shadow-lg bg-primary/5">
+    <Card className={`w-[200px] border-2 shadow-lg transition-all duration-300 ${
+      data.isActive 
+        ? 'border-green-500 bg-green-500/10 ring-4 ring-green-500/20' 
+        : 'border-primary bg-primary/5'
+    }`}>
       <CardHeader className="bg-primary/10 pb-4">
         <CardTitle className="flex items-center justify-center gap-2 text-lg">
           <Bot className="h-6 w-6" /> ReAct Agent

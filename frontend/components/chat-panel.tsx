@@ -18,9 +18,10 @@ interface ChatPanelProps {
     tools: string[];
   };
   onClose: () => void;
+  onTraceEvent?: (event: any) => void;
 }
 
-export function ChatPanel({ config, onClose }: ChatPanelProps) {
+export function ChatPanel({ config, onClose, onTraceEvent }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -94,16 +95,24 @@ export function ChatPanel({ config, onClose }: ChatPanelProps) {
                     newMessages[newMessages.length - 1].status = parsed.content;
                     return newMessages;
                  });
-              } else {
-                  // Append content
-                  assistantMessage += parsed.content;
-                  setMessages((prev) => {
-                    const newMessages = [...prev];
-                    const lastMsg = newMessages[newMessages.length - 1];
-                    lastMsg.content = assistantMessage;
-                    lastMsg.status = undefined; // Clear status when content arrives
-                    return newMessages;
-                  });
+              } else if (parsed.type === 'trace') {
+                  // Handle trace events
+                  if (onTraceEvent) {
+                      onTraceEvent(parsed.data);
+                  }
+              } else if (parsed.type === 'token' || parsed.content) {
+                  // Append content (handle both new 'token' type and legacy/fallback 'content' field)
+                  const content = parsed.type === 'token' ? parsed.content : parsed.content;
+                  if (content) {
+                    assistantMessage += content;
+                    setMessages((prev) => {
+                        const newMessages = [...prev];
+                        const lastMsg = newMessages[newMessages.length - 1];
+                        lastMsg.content = assistantMessage;
+                        lastMsg.status = undefined; // Clear status when content arrives
+                        return newMessages;
+                    });
+                  }
               }
             } catch (e) {
               console.error('Error parsing SSE data', e);

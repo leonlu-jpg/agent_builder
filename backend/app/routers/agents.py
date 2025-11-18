@@ -40,19 +40,46 @@ async def chat_agent(request: ChatRequest):
                     
                     # Stream LLM tokens
                     if kind == "on_chat_model_stream":
-                        content = event["data"]["chunk"].content
-                        if content:
-                            yield f"data: {json.dumps({'content': content})}\n\n"
+                        chunk = event["data"].get("chunk")
+                        if chunk:
+                            content = chunk.content
+                            if content:
+                                payload = json.dumps({"type": "token", "content": content})
+                                yield f"data: {payload}\n\n"
                     
-                    # Stream Tool Calls (Optional: could add a specific event type for UI to show 'Thinking...')
+                    # Stream Tool Calls
                     elif kind == "on_tool_start":
-                        yield f"data: {json.dumps({'type': 'status', 'content': 'Checking weather...'})}\n\n"
+                        name = event["name"]
+                        status_payload = json.dumps({"type": "status", "content": f"Running tool: {name}"})
+                        yield f"data: {status_payload}\n\n"
+                        
+                        trace_payload = json.dumps({"type": "trace", "data": {"event": "on_tool_start", "name": name}})
+                        yield f"data: {trace_payload}\n\n"
+
+                    elif kind == "on_tool_end":
+                        name = event["name"]
+                        trace_payload = json.dumps({"type": "trace", "data": {"event": "on_tool_end", "name": name}})
+                        yield f"data: {trace_payload}\n\n"
+
+                    # Stream Chain Events (for Agent Node highlighting)
+                    elif kind == "on_chain_start":
+                        name = event["name"]
+                        if name in ["agent", "tools"]: # Standard LangGraph node names
+                             trace_payload = json.dumps({"type": "trace", "data": {"event": "on_chain_start", "name": name}})
+                             yield f"data: {trace_payload}\n\n"
+                    
+                    elif kind == "on_chain_end":
+                        name = event["name"]
+                        if name in ["agent", "tools"]:
+                             trace_payload = json.dumps({"type": "trace", "data": {"event": "on_chain_end", "name": name}})
+                             yield f"data: {trace_payload}\n\n"
                         
                 yield "data: [DONE]\n\n"
             except Exception as e:
                 print(f"Error in event_generator: {e}")
                 traceback.print_exc()
-                yield f"data: {json.dumps({'content': f'Error: {str(e)}'})}\n\n"
+                error_payload = json.dumps({"type": "error", "content": f"Error: {str(e)}"})
+                yield f"data: {error_payload}\n\n"
                 yield "data: [DONE]\n\n"
 
         return StreamingResponse(event_generator(), media_type="text/event-stream")

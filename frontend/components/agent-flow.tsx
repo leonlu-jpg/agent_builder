@@ -85,6 +85,21 @@ export default function AgentFlow() {
     );
   }, [setNodes]);
 
+  const handleTraceEvent = useCallback((event: any) => {
+    console.log('Trace event:', event);
+    const { event: eventType, name } = event;
+
+    if (eventType === 'on_chain_start' && name === 'agent') {
+      onNodeDataChange('agent-1', { isActive: true });
+    } else if (eventType === 'on_chain_end' && name === 'agent') {
+      onNodeDataChange('agent-1', { isActive: false });
+    } else if (eventType === 'on_tool_start') {
+      onNodeDataChange('tool-1', { isActive: true });
+    } else if (eventType === 'on_tool_end') {
+      onNodeDataChange('tool-1', { isActive: false });
+    }
+  }, [onNodeDataChange]);
+
   // Inject the onChange handler into the node data
   const nodesWithHandler = nodes.map((node) => {
     if (node.type === 'geminiAgent' || node.type === 'toolNode') {
@@ -140,6 +155,7 @@ export default function AgentFlow() {
             tools: tools,
           }}
           onClose={() => setIsChatOpen(false)}
+          onTraceEvent={handleTraceEvent}
         />
       )}
     </div>

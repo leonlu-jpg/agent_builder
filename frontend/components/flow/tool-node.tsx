@@ -7,11 +7,16 @@ import { Wrench } from 'lucide-react';
 export type ToolNodeData = {
   toolName: string;
   onChange: (data: Partial<ToolNodeData>) => void;
+  isActive?: boolean;
 };
 
 const ToolNode = ({ data }: { data: ToolNodeData }) => {
   return (
-    <Card className="w-[250px] border-2 border-secondary shadow-lg">
+    <Card className={`w-[250px] border-2 shadow-lg transition-all duration-300 ${
+      data.isActive 
+        ? 'border-green-500 bg-green-500/10 ring-4 ring-green-500/20' 
+        : 'border-secondary'
+    }`}>
       <CardHeader className="bg-muted/50 pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Wrench className="h-5 w-5" /> Tool
